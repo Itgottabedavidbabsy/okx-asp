@@ -3,9 +3,59 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { useAppStore } from '../store/appStore.js';
 
+function LedgerModal({ agentId, agentName, onClose }) {
+  const [records, setRecords] = useState([]);
+  const [summary, setSummary] = useState({ total: 0, anchored: 0, pending: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.performance.agent(agentId)
+      .then((r) => { setRecords(r.data || []); setSummary({ total: r.total, anchored: r.anchored, pending: r.pending }); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [agentId]);
+
+  return (
+    <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="w-full max-w-[560px] max-h-[80vh] overflow-y-auto rounded-[10px] p-5" style={{ background: 'var(--card)', border: '1px solid var(--b2)' }} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-[15px] font-black" style={{ color: 'var(--txt)' }}>On-Chain Ledger — {agentName}</div>
+          <button onClick={onClose} className="text-[11px] font-bold" style={{ color: 'var(--sub)' }}>Close</button>
+        </div>
+        <div className="text-[11.5px] mb-4" style={{ color: 'var(--sub)' }}>
+          Every closed trade is hashed and batched into a Merkle root anchored on-chain — verifiable by anyone, independent of this platform.
+        </div>
+        {!loading && (
+          <div className="flex gap-2 mb-3">
+            <span className="text-[10.5px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(0,192,135,0.12)', color: '#00c087' }}>{summary.anchored} anchored</span>
+            <span className="text-[10.5px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(245,184,0,0.12)', color: '#f5b800' }}>{summary.pending} pending</span>
+          </div>
+        )}
+        {loading ? (
+          <div className="text-center py-6 text-[12px]" style={{ color: 'var(--sub)' }}>Loading ledger...</div>
+        ) : records.length === 0 ? (
+          <div className="text-center py-6 text-[12px]" style={{ color: 'var(--sub)' }}>No closed trades recorded yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 gap-1.5">
+            {records.map((r) => (
+              <div key={r.id} className="flex items-center justify-between px-3 py-2 rounded-[7px]" style={{ background: 'var(--card2)' }}>
+                <div className="font-mono text-[10.5px] truncate mr-2" style={{ color: 'var(--sub)' }}>{r.tradeHash.slice(0, 18)}...{r.tradeHash.slice(-6)}</div>
+                <span className="text-[9.5px] font-bold px-1.5 py-px rounded-lg flex-shrink-0" style={{ background: r.anchoredAt ? 'rgba(0,192,135,0.12)' : 'rgba(245,184,0,0.12)', color: r.anchoredAt ? '#00c087' : '#f5b800' }}>
+                  {r.anchoredAt ? `Anchored · ${r.chain}` : 'Pending anchor'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function MyAgents() {
   const [deployments, setDeployments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [ledgerAgent, setLedgerAgent] = useState(null);
   const navigate = useNavigate();
   const { addToast } = useAppStore();
 
@@ -85,7 +135,8 @@ export default function MyAgents() {
                       }}
                     >{d.status}</span>
                   </td>
-                  <td className="px-3.5 py-2.5 text-right">
+                  <td className="px-3.5 py-2.5 text-right whitespace-nowrap">
+                    <button onClick={() => setLedgerAgent({ id: d.agentId, name: d.agent?.name || d.agentId })} className="text-[11px] font-bold mr-3" style={{ color: '#06b6d4' }}>Ledger</button>
                     {d.status === 'live' && (
                       <button onClick={() => pause(d.id)} className="text-[11px] font-bold" style={{ color: '#f5475b' }}>Pause</button>
                     )}
@@ -96,6 +147,8 @@ export default function MyAgents() {
           </table>
         </div>
       )}
+
+      {ledgerAgent && <LedgerModal agentId={ledgerAgent.id} agentName={ledgerAgent.name} onClose={() => setLedgerAgent(null)} />}
     </div>
   );
 }

@@ -68,6 +68,14 @@ export const useAppStore = create((set, get) => ({
         if (msg.type === 'orderbook_update') {
           set({ orderBook: { asks: msg.data.asks || [], bids: msg.data.bids || [] } });
         }
+        if (msg.type === 'agent_cascade') {
+          get().addToast({ type: 'info', msg: `${msg.sourceAgentName} triggered ${msg.targetAgentName}` });
+          get().addActivity({
+            color: '#06b6d4',
+            text: `<strong>${msg.sourceAgentName}</strong> cascaded a signal to <strong>${msg.targetAgentName}</strong>`,
+            time: 'now',
+          });
+        }
       } catch {}
     };
     set({ ws });

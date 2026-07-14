@@ -6,6 +6,12 @@ export const config = {
   db: { url: process.env.DATABASE_URL },
   redis: { url: process.env.REDIS_URL || 'redis://localhost:6379' },
   jwt: { secret: process.env.JWT_SECRET || 'dev_secret', expiresIn: '7d' },
+  ledger: {
+    rpcUrl: process.env.LEDGER_RPC_URL,
+    privateKey: process.env.LEDGER_PRIVATE_KEY,
+    chainName: process.env.LEDGER_CHAIN_NAME || 'ethereum-sepolia',
+    anchorIntervalMs: parseInt(process.env.LEDGER_ANCHOR_INTERVAL_MS || '600000', 10),
+  },
   okx: {
     clientId: process.env.OKX_CLIENT_ID,
     clientSecret: process.env.OKX_CLIENT_SECRET,

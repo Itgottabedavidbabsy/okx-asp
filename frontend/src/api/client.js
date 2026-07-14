@@ -28,6 +28,9 @@ export const api = {
     deploy:  (body)         => client.post('/agents/deploy', body),
     my:      ()             => client.get('/agents/my'),
     pause:   (id)           => client.put(`/agents/${id}/pause`),
+    links:       (agentId)          => client.get(`/agents/${agentId}/links`),
+    createLink:  (agentId, body)    => client.post(`/agents/${agentId}/links`, body),
+    deleteLink:  (linkId)           => client.delete(`/agents/links/${linkId}`),
   },
   signals: {
     list:    (params = {})  => client.get('/signals', { params }),
@@ -44,5 +47,9 @@ export const api = {
   earnings: {
     get:     ()             => client.get('/earnings'),
     withdraw:(body)         => client.post('/earnings/withdraw', body),
+  },
+  performance: {
+    agent:   (agentId)      => client.get(`/performance/agent/${agentId}`),
+    verify:  (tradeHash)    => client.get(`/performance/verify/${tradeHash}`),
   },
 };

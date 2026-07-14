@@ -44,6 +44,9 @@ model Agent {
 
   deployments  Deployment[]
   subscribers  Subscriber[]
+  performanceRecords PerformanceRecord[]
+  outgoingLinks AgentLink[] @relation("LinkSource")
+  incomingLinks AgentLink[] @relation("LinkTarget")
 }
 
 model Deployment {
@@ -119,4 +122,32 @@ model Backtest {
   results    Json?
   status     String   @default("pending")
   createdAt  DateTime @default(now())
+}
+
+model PerformanceRecord {
+  id           String    @id @default(cuid())
+  agentId      String
+  agent        Agent     @relation(fields: [agentId], references: [id])
+  deploymentId String
+  positionId   String
+  tradeHash    String    @unique
+  merkleRoot   String?
+  merkleProof  Json?
+  txHash       String?
+  chain        String?
+  blockNumber  Int?
+  anchoredAt   DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model AgentLink {
+  id            String   @id @default(cuid())
+  sourceAgentId String
+  sourceAgent   Agent    @relation("LinkSource", fields: [sourceAgentId], references: [id])
+  targetAgentId String
+  targetAgent   Agent    @relation("LinkTarget", fields: [targetAgentId], references: [id])
+  triggerOn     String   @default("signal_routed")
+  minConfidence Float    @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
 }
