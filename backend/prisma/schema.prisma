@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String?
+  okxAccessToken  String?
+  okxRefreshToken String?
+  okxSubAccount   String?
+  tier            String   @default("free")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  deployments  Deployment[]
+  agents       Agent[]
+  subscribers  Subscriber[]
+  payouts      Payout[]
+}
+
+model Agent {
+  id           String   @id @default(cuid())
+  name         String
+  category     String
+  description  String
+  creatorId    String
+  creator      User     @relation(fields: [creatorId], references: [id])
+  priceMonthly Float    @default(29)
+  perfFee      Float    @default(0.15)
+  status       String   @default("draft")
+  roi30d       Float    @default(0)
+  sharpe       Float    @default(0)
+  maxDrawdown  Float    @default(0)
+  winRate      Float    @default(0)
+  statsJson    Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  deployments  Deployment[]
+  subscribers  Subscriber[]
+}
+
+model Deployment {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  agentId      String
+  agent        Agent    @relation(fields: [agentId], references: [id])
+  capitalUsdt  Float
+  subAccount   String
+  status       String   @default("live")
+  riskConfig   Json?
+  createdAt    DateTime @default(now())
+
+  positions    Position[]
+}
+
+model Position {
+  id             String     @id @default(cuid())
+  deploymentId   String
+  deployment     Deployment @relation(fields: [deploymentId], references: [id])
+  pair           String
+  direction      String
+  size           String
+  entryPrice     Float
+  markPrice      Float      @default(0)
+  unrealizedPnl  Float      @default(0)
+  status         String     @default("open")
+  openedAt       DateTime   @default(now())
+  closedAt       DateTime?
+}
+
+model Signal {
+  id         String   @id @default(cuid())
+  type       String
+  asset      String
+  title      String
+  detail     String
+  confidence Float
+  impact     String
+  source     String?
+  createdAt  DateTime @default(now())
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  tier      String   @default("pro")
+  status    String   @default("active")
+  startDate DateTime @default(now())
+  endDate   DateTime?
+}
+
+model Payout {
+  id        String   @id @default(cuid())
+  creatorId String
+  creator   User     @relation(fields: [creatorId], references: [id])
+  amount    Float
+  status    String   @default("pending")
+  txHash    String?
+  paidAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Backtest {
+  id         String   @id @default(cuid())
+  userId     String
+  strategyId String
+  paramsJson Json
+  results    Json?
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+}
