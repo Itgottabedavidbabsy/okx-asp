@@ -52,7 +52,9 @@ export const useAppStore = create((set, get) => ({
   initWebSocket: () => {
     const { token, ws: existing } = get();
     if (existing) return;
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws${token ? `?token=${token}` : ''}`;
+    // VITE_WS_URL should be the full backend ws endpoint, e.g. wss://okx-asp.onrender.com/ws
+    const base = import.meta.env.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
+    const wsUrl = `${base}${token ? `?token=${token}` : ''}`;
     const ws = new WebSocket(wsUrl);
     ws.onopen  = () => { set({ ws, wssConnected: true }); };
     ws.onclose = () => { set({ ws: null, wssConnected: false }); setTimeout(() => get().initWebSocket(), 5000); };

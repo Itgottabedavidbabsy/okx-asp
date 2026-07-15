@@ -1,7 +1,11 @@
 import axios from 'axios';
 import { useAppStore } from '../store/appStore.js';
 
-const client = axios.create({ baseURL: '/api', timeout: 10000 });
+// In production the frontend (Vercel) and backend (Render) live on separate
+// domains, so relative '/api' only works in local dev behind Vite's proxy.
+// VITE_API_URL should be the full backend base including '/api', e.g.
+// https://okx-asp.onrender.com/api
+const client = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api', timeout: 10000 });
 
 client.interceptors.request.use((config) => {
   const token = useAppStore.getState().token;
