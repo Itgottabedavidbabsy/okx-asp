@@ -4,6 +4,7 @@ import { createApp } from './app.js';
 import { initWebSocket } from './ws/server.js';
 import { prisma } from './db/prisma.js';
 import { seedSignals } from './services/signals.js';
+import { seedAgents } from './db/seed.js';
 import { runAnchorBatch } from './services/ledger.js';
 import { config } from './config/index.js';
 
@@ -29,6 +30,7 @@ async function start() {
   await connectWithRetry();
   console.log('[DB] PostgreSQL connected');
   await seedSignals().catch((err) => console.error('[Seed] Failed to seed signals (non-fatal)', err.message));
+  await seedAgents().catch((err) => console.error('[Seed] Failed to seed agents (non-fatal)', err.message));
 
   const app    = createApp();
   const server = http.createServer(app);
