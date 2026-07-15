@@ -7,10 +7,28 @@ import { seedSignals } from './services/signals.js';
 import { runAnchorBatch } from './services/ledger.js';
 import { config } from './config/index.js';
 
+// Serverless/free-tier Postgres (e.g. Neon) suspends when idle and can take
+// a few seconds to wake on the first connection — long enough to blow past
+// Prisma's default connect timeout on a cold deploy. Retry with backoff
+// instead of crash-looping the whole process over a transient P1001.
+async function connectWithRetry(maxAttempts = 6, baseDelayMs = 2000) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await prisma.$connect();
+      return;
+    } catch (err) {
+      if (attempt === maxAttempts) throw err;
+      const delay = baseDelayMs * attempt;
+      console.warn(`[DB] Connect attempt ${attempt}/${maxAttempts} failed (${err.code || err.message}) — retrying in ${delay}ms`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+}
+
 async function start() {
-  await prisma.$connect();
+  await connectWithRetry();
   console.log('[DB] PostgreSQL connected');
-  await seedSignals();
+  await seedSignals().catch((err) => console.error('[Seed] Failed to seed signals (non-fatal)', err.message));
 
   const app    = createApp();
   const server = http.createServer(app);
