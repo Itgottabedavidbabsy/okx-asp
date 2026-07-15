@@ -29,8 +29,8 @@ async function connectWithRetry(maxAttempts = 6, baseDelayMs = 2000) {
 async function start() {
   await connectWithRetry();
   console.log('[DB] PostgreSQL connected');
-  await seedSignals().catch((err) => console.error('[Seed] Failed to seed signals (non-fatal)', err.message));
-  await seedAgents().catch((err) => console.error('[Seed] Failed to seed agents (non-fatal)', err.message));
+  await seedSignals().catch((err) => console.error('[Seed] Failed to seed signals (non-fatal)', err.stack || err.message));
+  await seedAgents().catch((err) => console.error('[Seed] Failed to seed agents (non-fatal)', err.stack || err.message));
 
   const app    = createApp();
   const server = http.createServer(app);

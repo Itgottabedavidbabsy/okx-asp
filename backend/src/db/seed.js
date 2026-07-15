@@ -45,18 +45,24 @@ const AGENTS = [
 ];
 
 export async function seedAgents() {
+  console.log('[Seed] seedAgents() starting...');
   const count = await prisma.agent.count();
-  if (count > 0) return;
+  console.log(`[Seed] Existing agent count: ${count}`);
+  if (count > 0) {
+    console.log('[Seed] Agents already present — skipping seed.');
+    return;
+  }
 
   let creator = await prisma.user.findUnique({ where: { email: PLATFORM_CREATOR_EMAIL } });
   if (!creator) {
     creator = await prisma.user.create({ data: { email: PLATFORM_CREATOR_EMAIL, tier: 'pro' } });
+    console.log(`[Seed] Created platform creator user ${creator.id}`);
   }
 
-  await prisma.agent.createMany({
+  const result = await prisma.agent.createMany({
     data: AGENTS.map((a) => ({ ...a, creatorId: creator.id, status: 'live' })),
   });
-  console.log(`[Seed] Created ${AGENTS.length} marketplace agents`);
+  console.log(`[Seed] Created ${result.count} marketplace agents`);
 }
 
 // Allow `npm run db:seed` to run this standalone too.
