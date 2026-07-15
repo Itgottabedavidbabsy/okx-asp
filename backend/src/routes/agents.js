@@ -4,14 +4,6 @@ import { prisma } from '../db/prisma.js';
 
 const router = Router();
 
-// TEMPORARY debug route — shows raw agent rows with no filtering, to
-// diagnose why the filtered query below returns nothing despite rows
-// existing. Safe to remove once the mismatch is found.
-router.get('/_debug/raw', async (req, res) => {
-  const all = await prisma.agent.findMany();
-  res.json({ count: all.length, agents: all });
-});
-
 // List all marketplace agents
 router.get('/', optionalAuth, async (req, res) => {
   const { category, sort = 'roi30d', limit = 20 } = req.query;
