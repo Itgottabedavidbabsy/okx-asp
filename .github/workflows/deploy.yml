@@ -26,6 +26,11 @@ jobs:
           echo "Backend validates OK"
 
   # ── Deploy Frontend to Vercel ──────────────────────────────────
+  # Note: Vercel's own GitHub integration already auto-deploys on push to
+  # main, so this job is a secondary/backup path — it uses the Vercel CLI
+  # directly with the repo secrets below. Frontend build variables come
+  # from frontend/.env.production (committed, non-sensitive backend URLs),
+  # not from secrets, so nothing here overrides those.
   deploy-frontend:
     name: Deploy Frontend (Vercel)
     runs-on: ubuntu-latest
@@ -37,9 +42,6 @@ jobs:
         with: { node-version: '${{ env.NODE_VERSION }}' }
       - run: npm install -g vercel
       - run: cd frontend && npm ci && npm run build
-        env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_WS_URL:  ${{ secrets.VITE_WS_URL }}
       - name: Deploy to Vercel
         run: |
           cd frontend
@@ -50,17 +52,5 @@ jobs:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-  # ── Deploy Backend to Railway ──────────────────────────────────
-  deploy-backend:
-    name: Deploy Backend (Railway)
-    runs-on: ubuntu-latest
-    needs: validate
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-      - name: Deploy to Railway
-        run: railway up --service backend --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+  # Backend deploys are handled by Render's own GitHub integration
+  # (auto-deploys on push to main) — no Actions job needed for it.
