@@ -6,6 +6,36 @@ React + Vite (frontend) and Node.js + Express + Prisma (backend).
 
 ---
 
+## Current Production Setup (live)
+
+| Piece | Where | URL / Notes |
+|---|---|---|
+| Frontend | Vercel | https://okx-asp.vercel.app |
+| Backend | Render (free tier) | https://okx-asp.onrender.com — sleeps after 15 min idle, ~30-60s cold start |
+| PostgreSQL | Neon (free tier) | `DATABASE_URL` env var on Render |
+| Redis | Upstash (free tier) | `REDIS_URL` env var on Render |
+| Repo | GitHub (private) | https://github.com/Itgottabedavidbabsy/okx-asp |
+| CI/CD | Render + Vercel git integrations auto-deploy on push to `main`; GitHub Actions runs validate + a backup Vercel deploy | |
+
+Backend start command (Render): `npx prisma db push --accept-data-loss && node src/server.js`
+(uses `db push` because the repo is schema-only, no migration files).
+
+Frontend production URLs are committed in `frontend/.env.production`.
+
+Pending: OKX OAuth credentials (broker application under review) — until
+`OKX_CLIENT_ID`/`OKX_CLIENT_SECRET`/`OKX_REDIRECT_URI` are set on Render,
+"Connect OKX" and live position sync are inactive; all other features work.
+
+Extra features beyond the original build guide:
+- **On-chain performance verification** — closed trades are SHA-256 hashed,
+  Merkle-batched, and anchored to a public chain (`services/ledger.js`;
+  simulated-anchor mode until `LEDGER_RPC_URL`/`LEDGER_PRIVATE_KEY` are set).
+  Public verify endpoints under `/api/performance/*`.
+- **Agent composability** — agents can trigger other agents via signal
+  chains (`services/composability.js`, AgentLink model, UI on Signal Hub).
+
+---
+
 ## Architecture
 
 - **Frontend** — React 18 + Vite + Tailwind CSS + Zustand → Vercel
